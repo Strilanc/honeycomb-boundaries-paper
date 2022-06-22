@@ -111,9 +111,14 @@ literate={*}{{\char42}}1
 \email{mgnewman@google.com}
 \affiliation{Google Quantum AI, Santa Barbara, California 93117, USA}
 
+\author{Matt McEwen}
+\email{mmcewen@google.com}
+\affiliation{Google Quantum AI, Santa Barbara, California 93117, USA}
+\affiliation{University of California, Santa Barbara, 93106, USA}
+
 \begin{abstract}
 We improve the planar honeycomb code by describing boundaries that need no additional physical connectivity, and by optimizing the shape of the qubit patch.
-We then benchmark the code using Monte Carlo sampling to estimate logical error rates and derive metrics including thresholds, lambdas, and teraquop qubit counts.
+We then benchmark the code using Monte Carlo sampling to estimate logical error rates and derive metrics including thresholds, lambdas, and teraquop footprints.
 We determine that the planar honeycomb code can create a logical qubit with one-in-a-trillion logical error rates using 7000 physical qubits at a 0.1\% gate-level error rate (or 900 physical qubits given native two-qubit parity measurements).
 Our results cement the honeycomb code as a promising candidate for two-dimensional qubit architectures with sparse connectivity.
 \end{abstract}
@@ -153,8 +158,9 @@ In \sec{boundaries}, we define our version of boundaries for the planar honeycom
 We also discuss different geometries of patches and their effective distances.
 Then in \sec{sims}, we present simulation results that compare this planar honeycomb code to the periodic honeycomb code we benchmarked in \cite{gidney2021honeycombmemory}.
 We then make our conclusions in \sec{conclusion}.
-\app{noise} describes the noise models we used.
+\app{noise} describes the noise models we used in the main text.
 \app{extra_figures} includes some additional figures that were too detailed to fit into the main text.
+\app{hardware_em3} describes some more physically-motivated noise models for direct parity measurements. 
 \app{example_circuit} specifies the exact circuit of a small planar honeycomb code memory experiment.
 
 \section{The Honeycomb Code with Boundaries}
@@ -267,7 +273,7 @@ Fortunately, as we will show, these changes do \emph{not} qualitatively affect t
         \includegraphics{assets/boundary_detectors.png}
     }
     \caption{
-    A comparison of a bulk face, for which two detectors are formed every six edge measurement rounds, and a boundary face, for which one detector is formed every six edge measurement rounds.  The vertical black bars represent the edge measurements, while the horizontal colored lines represent the time during which the labeled Pauli operator stabilizes the face.  Semi-circles represent projecting onto a subspace stabilized by the labeled operator, while stars represent an anti-commuting measurement destabilizing the face from that subspace.  Circles represent detectors - collections of measurements which should yield deterministic parity in the absence of noise and which are labeled by arrows.
+    A comparison of a bulk face, for which two detectors are formed every six edge measurement rounds, and a boundary face, for which one detector is formed every six edge measurement rounds.  The vertical black bars represent the edge measurements, while the horizontal colored lines represent the time during which the labeled Pauli operator stabilizes the face.  Semi-circles represent projecting onto a subspace stabilized by the labeled operator, while stars represent an anti-commuting measurement destabilizing the face from that subspace.  Circles represent detectors - collections of measurements which should yield deterministic parity in the absence of noise. Black arrows indicate which measurements are used to form these detectors.
     }
     \label{fig:detectors}
 \end{figure}
@@ -310,11 +316,11 @@ The graphlike code distance search revealed that this expectation was wrong.
 The sheared layouts have lower graphlike code distance - see \tbl{graphlike_distances}.
 The issue is that, because of the rotational symmetry in a hexagonal tiling, there are fast moving diagonal error mechanisms analogous to the fast moving vertical error mechanisms that forced us to change the patch aspect ratio.
 Shearing the layout preserves the horizontal distance between the two vertical boundaries, but it reduces the diagonal distance.
-Based on this information, we switched to using vertical boundaries that moved straight up-and-down - see \fig{cut_out_patch} - squiggling back and forth in an unsatisfying but graphlike-code-distance-maximizing way.
+Based on this information, we switched to using vertical boundaries that moved straight up-and-down - see \fig{cut_out_patch} - squiggling back and forth in a graphlike-code-distance-maximizing way.
 
 \begin{figure}[ht!]
     \centering
-    \resizebox{0.8\linewidth}{!}{
+    \resizebox{\linewidth}{!}{
         \includegraphics{assets/bad_error.png}
     }
     \caption{
@@ -326,7 +332,7 @@ Based on this information, we switched to using vertical boundaries that moved s
     The number in the circle is the edge measurement layer where that detector is checked, potentially producing a detection event.
     Each white box represents a single physical error, with the kind of error indicated by the text inside the box.
     An arrow from a white box to a white circle indicates that the error triggers the detector to produce a detection event.
-    Triggering a detector twice cancels out the detection event.
+    Triggering a detector twice cancels out the detection event.  Below, we plot the error string traversing the lattice through both time and space.
     }
     \label{fig:bad_error}
 \end{figure}
@@ -384,7 +390,7 @@ If $E_H$ and $E_V$ are the H-type and V-type error rates then we define the comb
 We use three error models in this paper (see \tbl{models}).
 The first error model we use is SD6 (standard depolarizing 6-step cycle), a standard circuit model with homogeneous component errors relevant to the QEC literature.
 The second is SI1000 (superconducting-inspired 1000 $ns$ cycle), a superconducting-inspired error model where, for example, the measurements are significantly noisier than the gates.  
-Finally, we adopt the Majorana-inspired EM3 model (entangling-measurement 3-step cycle), which includes two-qubit entangling measurements, to compare with the surface code benchmarking performed in \cite{chao2020optimization}.
+Finally, we adopt the Majorana-inspired EM3 model (entangling-measurement 3-step cycle), which includes two-qubit entangling measurements, to compare with the surface code benchmarking performed in \cite{chao2020optimization}. Variations on this EM3 error model are discussed in \app{hardware_em3}.
 
 \fig{thresholds} contains the raw logical error rates for both the periodic and planar honeycomb codes, while \fig{line_fits} shows line fits projecting logical error rates at larger code distances.
 Both are computed using a custom MWPM decoder that includes correlations between the two connected components of the error graph \cite{gidney2021honeycombmemory, fowler2013optimal}. 
@@ -429,9 +435,9 @@ Similar to \cite{gidney2021honeycombmemory}, in the EM3 model using two-qubit en
     \label{fig:line_fits}
 \end{figure}
 
-\fig{lambdas} and \fig{teraquop_footprints} plot the lambda factors and teraquop qubit counts, respectively.  
+\fig{lambdas} and \fig{teraquop_footprints} plot the lambda factors and teraquop footprints, respectively.  
 From \fig{lambdas} we verify that lambda increases approximately linearly with error rate well below threshold.
-Ultimately, the teraquop plot answers the most important question of how much qubit overhead is required to hit a target error rate.
+Ultimately, the teraquop footprint plot answers the most important question of how much qubit overhead is required to hit a target error rate.
 Essentially, we observe that enforcing planar constraints incurs no qualitative cost to the qubit overheads required for a teraquop memory.
 At a physical error rate of $10^{-3}$, a planar teraquop honeycomb memory costs approximately 7000/50000/900 qubits in the SD6/SI1000/EM3 models.
 SI1000 has a particularly bad teraquop footprint at this physical error rate because $10^{-3}$ is close to threshold in the SI1000 model.
@@ -470,7 +476,7 @@ Correspondingly, the SI1000 teraquop footprint drops dramatically as the physica
 \label{sec:conclusion}
 
 The honeycomb code is a promising candidate for a sparsely connected quantum memory.  
-While it is not as robust as the surface code in the more standard SD6 and SI1000 error models, it boasts a teraquop qubit count within an order of magnitude of the surface code at physically plausible error rates.  
+While it is not as robust as the surface code in the more standard SD6 and SI1000 error models, it boasts a teraquop footprint within an order of magnitude of the surface code at physically plausible error rates.  
 In the EM3 error model, it significantly outperforms previous studies of the surface code \cite{chao2020optimization}.
 
 Unlike the planar variant of the surface code, where the circuit is nearly identical to the toric code, the planar variant of the honeycomb requires an appreciable departure from its periodic cousin in terms of the ordering of operations.
@@ -486,9 +492,10 @@ We hope that the smallest conceivable distance-3 instantiation of the code, usin
 
 \section{Contributions}
 
-Both authors worked together extensively to understand the planar honeycomb code and to present it in a clear way.
+Craig Gidney and Michael Newman worked together extensively to understand the planar honeycomb code and to present it in a clear way.
 Craig Gidney wrote the circuit generation, simulation, and plotting code.
 Michael Newman did the majority of the paper writing.
+Matt McEwen contributed refactored variants of the EM3 error model, with associated simulations and plots in the appendix.
 
 \section{Acknowledgements}
 
@@ -514,10 +521,6 @@ We introduced a ``truncated parity measurement" $M_{PI}(p)$ to account for this.
 Second, in \cite{gidney2021honeycombmemory} we accidentally said that we were applying errors \emph{after} $M_{PP}$ measurements.
 Actually, the code applies errors \emph{before} the measurement.
 
-Ultimately these are minor details but, overall, we do feel that the noise model could use some refactoring.
-The most objectively problematic issue with our current definitions is that $M_{PI}(p)$ is noticeably noisier than $M_{PP}(p)$ despite being an ostensibly simpler version of that operation.
-We suspect this is the underlying reason why the EM3 teraquop footprint of the planar honeycomb code is the only footprint that got worse compared to the periodic honeycomb code (see \fig{teraquop_footprints}).
-
 \begin{table}[h]
     \centering
     \resizebox{\linewidth}{!}{
@@ -525,9 +528,9 @@ We suspect this is the underlying reason why the EM3 teraquop footprint of the p
          \hline
          \textbf{Noisy Gate} & \textbf{Definition} \\
          \hline
-         $\text{AnyClifford}_2(p)$ & \text{Any 2-qubit Clifford gate, followed by a 2-qubit depolarizing channel of strength $p$.} \\
+         $\text{AnyClifford}_2(p)$ & \text{Any two-qubit Clifford gate, followed by a two-qubit depolarizing channel of strength $p$.} \\
          \hline
-         $\text{AnyClifford}_1(p)$ & Any 1-qubit Clifford gate, followed by a 1-qubit depolarizing channel of strength $p$. \\
+         $\text{AnyClifford}_1(p)$ & Any one-qubit Clifford gate, followed by a one-qubit depolarizing channel of strength $p$. \\
          \hline
          $\text{Init}_Z(p)$ & Initialize the qubit as $\ket{0}$, followed by a bitflip channel of strength $p$. \\
          \hline
@@ -536,16 +539,13 @@ We suspect this is the underlying reason why the EM3 teraquop footprint of the p
           & Measure a Pauli product $PP$ on a pair of qubits and, with probability $p$, choose an error
           \\ $M_{PP}(p)$ & uniformly from the set $\{I,X,Y,Z\}^{\otimes 2} \times \{\text{flip, no flip}\}$.
           \\&The flip error component causes the wrong result to be reported.
-          \\&The Pauli error components are applied to the target qubits before the measurement.\\
+          \\&The Pauli error components are applied to the target qubits before the measurement.
+          \\&If one of the Pauli operators is $I$, so that it is a single-qubit measurement (on the boundary), 
+          \\&choose an error uniformly from the set $\{I,X,Y,Z\} \times \{\text{flip, no flip}\}$.\\ 
          \hline
-          & Single-qubit boundary parity measurement.
-          \\$M_{PI}(p)$&Target qubit is flipped (using a Pauli that anticommutes with the measurement) \\&before the measurement with probability $p$.
-          \\&Independently, the measurement result is flipped with probability $p$.
-          \\
+         $\text{Idle}(p)$ & If the qubit is not used in this time step, apply a one-qubit depolarizing channel of strength $p$. \\
          \hline
-         $\text{Idle}(p)$ & If the qubit is not used in this time step, apply a 1-qubit depolarizing channel of strength $p$. \\
-         \hline
-         $\text{ResonatorIdle}(p)$ & If the qubit is not measured or reset in a time step during which other qubits are \\ &  being measured or reset, apply a 1-qubit depolarizing channel of strength $p$. \\
+         $\text{ResonatorIdle}(p)$ & If the qubit is not measured or reset in a time step during which other qubits are \\ &  being measured or reset, apply a one-qubit depolarizing channel of strength $p$. \\
          \hline
     \end{tabular}
     }
@@ -553,7 +553,7 @@ We suspect this is the underlying reason why the EM3 teraquop footprint of the p
         Modified from \cite{gidney2021honeycombmemory}.
         Noise channels and the rules used to apply them.
         Noisy rules stack with each other - for example, Idle($p$) and ResonatorIdle($p$) can both apply depolarizing channels in the same time step.
-        Note that our direct measurement error model is not phenomenological - correlated errors are applied according to the support of each two-qubit measurement, coinciding with the error model in \cite{chao2020optimization}. 
+        Note that our direct measurement error model is still using circuit noise (it is not a phenomenological noise model) - correlated errors are applied according to the support of each two-qubit measurement, coinciding with the error model in \cite{chao2020optimization}. For further discussion of this error model, see \app{hardware_em3}.
     }
     \label{tbl:noise}
 \end{table}
@@ -593,9 +593,8 @@ We suspect this is the underlying reason why the EM3 teraquop footprint of the p
             &\begin{tabular}{@{}l@{}}
                 $\text{M}_{PP}(p)$\\
                 $\text{M}_{PI}(p)$\\
-                $\text{AnyClifford}_1(p)$\\
-                $\text{Init}_Z(p)$\\
-                $\text{M}_Z(p)$\\
+                $\text{Init}_Z(p/2)$\\
+                $\text{M}_Z(p/2)$\\
                 $\text{Idle}(p)$\\
             \end{tabular}
         \\\hline
@@ -619,6 +618,7 @@ We suspect this is the underlying reason why the EM3 teraquop footprint of the p
     \label{tbl:models}
 \end{table}
 
+\clearpage
 \section{Supplementary Figures}
 \label{app:extra_figures}
 
@@ -645,7 +645,8 @@ We suspect this is the underlying reason why the EM3 teraquop footprint of the p
     }
     \caption{
     A planar honeycomb code using a sheared patch shape.
-    While this lattice configuration is $\approx33\%$ more qubit-efficient with respect to the length of a minimum weight chain of single-qubit data errors, it is less qubit-efficient with respect to its effective distance in a circuit model.
+    This was the initial patch shape we tried using, because shearing increases the minimum length of logical operators \cite{bombin2007optimal} in the periodic honeycomb code and because shearing makes the four boundaries symmetrical in the hexagonal lattice.
+    But we found it has a suboptimal graphlike code distance due to the reduced diagonal distance between the two green boundaries.
     }
     \label{fig:sheared}
 \end{figure}
@@ -688,6 +689,82 @@ We suspect this is the underlying reason why the EM3 teraquop footprint of the p
     }
     \label{fig:threshold_breakdown}
 \end{figure}
+
+\clearpage
+\section{Hardware applicability of EM3 error models}
+\label{app:hardware_em3}
+
+% one day, i asked michael and craig 'hey, why does your em3 error model make no sense?' they said 'because we're theorists, you do better' so i did and it didn't change much, which is great, the end
+
+Given the performance of the honeycomb code in the direct measurement model, the correspondence of the error model to hardware becomes an important question. Conveniently, the performance of the code in a direct measurement model is not especially sensitive to details of the error model, as we show here.
+
+The EM3 error model in the main text was chosen for easy comparison to other literature, specifically \cite{chao2020optimization}. It doesn't correspond to the errors expected from a hardware implementation of two-qubit direct parity measurements. 
+
+Here, we present two additional error models intended to mimic those provided for the standard circuit model. 
+SDEM3 represents a simpler error model, with two-qubit depolarizing error applied after each two-qubit measurement gate, uncorrelated with a possible measurement flip.
+
+SIEM3000 represents a more complex error model inspired by realizations of two-qubit parity measurements (MPP) in superconducting hardware. This error model applies two distinct error mechanisms with each MPP: first, a two-qubit error parallel to the measurement axis (e.g. a $ZZ$ error for MZZ), representing accidental measurement the individual qubit states rather than only their parity; and second, independent one-qubit errors perpendicular to the measurement (e.g. $X$ for MZZ) representing the independent likelihood of each qubit undergoing independent errors, such as $T_1$ decay. Note that this error model does not fully capture errors expected for a given hardware implementation of parity measurements and other more complex models might better reflect a spesific experimental realization. For example, one could imagine associating a $T_1$ decay error on one qubit during measurement with a bitflip on that qubit and an additional dephasing error on the other qubit. Rather than fully capturing possible hardware errors, these models are intended to serve as some evidence of the sensitivity of code performance in direct measurement models to the details of the error model used. \tbl{em3_mpp_noises} summarizes the re-definitions of MPP errors for these three models, with all other error rates being the same as for the EM3 model described in \tbl{models} and with individual errors given in \tbl{noise}. 
+
+\begin{table}[h]
+    \centering
+    \resizebox{\linewidth}{!}{
+    \begin{tabular}{|r|l|}
+         \hline
+         \textbf{Noise Model} & \textbf{MPP Error Implementation} \\
+         \hline
+         EM3 
+         & Measure a Pauli product $PP$ on a pair of qubits and, with probability $p$, choose an error
+         \\&uniformly from the set $\{I,X,Y,Z\}^{\otimes 2} \times \{\text{flip, no flip}\}$.
+         \\&The flip error component causes the wrong result to be reported.
+         \\&The Pauli error components are applied to the target qubits before the measurement.\\ 
+         \hline
+         SDEM3
+         & Measure a Pauli product $PP$ on a pair of qubits,
+         \\& and apply a two-qubit depolarizing channel with probability $p$: 
+         \\& \begin{tabular}{l}
+              Apply the trivial Pauli operator ($II$) with probability $1-p$
+              \\  or any non-trivial Pauli operator with equal probability $p/15$\\
+         \end{tabular}
+         \\& and independently report the wrong measurement result with probability $p$\\
+         \hline
+         SIEM3000
+         & Measure a Pauli product $PP$ on a pair of qubits,
+         \\& and apply a two-qubit dephasing channel with probability $p$: 
+         \\& \begin{tabular}{l}
+              Apply the Pauli operator used for the measurement $PP$ with probability $p$
+              \\ (e.g. for MZZ, apply ZZ with probability $p$)\\
+         \end{tabular}
+         \\& and, independently for each qubit, apply a bitflip error with probability $p$:
+         \\& \begin{tabular}{l}
+              Apply a Pauli operator $P' \neq P$ with probability $p$
+              \\ (e.g. for MZZ, apply $X$ with probability $p$)\\
+         \end{tabular}
+         \\& and independently report the wrong measurement result with probability $p$\\ 
+         \hline
+         
+    \end{tabular}
+    }
+    \caption{
+        The MPP error mechanism for EM3, SDEM3 and SIEM3000.
+        All other elements of the error model are identical to EM3 described in \tbl{models}, with elemental errors given in \tbl{noise}.
+    }
+    \label{tbl:em3_mpp_noises}
+\end{table}
+
+\begin{figure}
+    \centering
+    \resizebox{\linewidth}{!}{
+        \includegraphics{assets/em_comparison.png}
+    }
+    \caption{
+        Lambda factor and teraquop footprint plots for the three EM3-like error models described in \tbl{em3_mpp_noises}. EM3 is the error model used in the main text. SDEM3 is a more simplistic error model, without correlations between the 2-qubit depolarizing errors and the classical bit flip errors. SIEM3000 is a more complex model, representative of some errors expected in a hardware implementation. The latter two models have qualitatively similar performance, illustrating the some robustness to the precise details of the MPP error model.
+    }
+    \label{fig:em_comparison}
+\end{figure}
+
+\fig{em_comparison} illustrates the lambda factors and teraquop footprints for the three given error models. Specifically, the differences between the SDEM3 and SIEM3000 are of similar scale to the estimated uncertainty throughout the studied range. This demonstrated a relative insensitivity to the details of the error model.
+
+All three error models coincide just above $\Lambda=10$, at an error parameter just below $p=10^{-3}$. Notably however, while SDEM3 and SIEM3000 have a similar thresholds below 1\%, the correlated EM3 model has noticeably higher threshold, and quite a distinct slope between threshold and the coincident point around $\Lambda=10$. This difference in scaling behaviour provides some reason to be cautious when quoting threshold alone as a summary of code performance under a given error model. Overall however, the qualitative agreement between these different error models for the MPP operation provides some evidence that the performance of the code is robust to changes in the error model, and is likely to remain similar for a true hardware error model for direct parity measurements. Details regarding the relative importance of different error mechanisms have been neglected here, and represent a good opportunity for future work, as does density matrix simulations of the errors associated with hardware parity measurements. 
 
 \clearpage
 \section{Example Planar Honeycomb Circuit}
