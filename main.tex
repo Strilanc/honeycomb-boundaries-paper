@@ -133,7 +133,7 @@ The logical qubits of the honeycomb code are defined by pairs of anti-commuting 
 This sidesteps a well-known issue with building a subsystem code out of Kitaev's honeycomb model, namely that it encodes no \emph{static} logical qubits \cite{kitaev2006anyons, suchara2011constructions, lee2017topological, wootton2021hexagonal}.
 
 The honeycomb code's realization on a degree-3 (or less) grid of qubits has practical hardware merits \cite{chamberland2020topological}, and its construction out of weight-two parity measurements makes it natural for architectures where such operations are native (such as Majorana-based architectures \cite{chao2020optimization}).  
-Historically, requiring this level of sparsity and locality has led to codes with steep losses in performance \cite{bacon2006operator, suchara2011constructions}.
+Historically, requiring this level of sparsity and locality has led to codes with steep losses in performance \cite{bacon2006operator, suchara2011constructions, li2019compass}.
 But the honeycomb code's low-weight parity checks and succinct measurement cycle have yielded a robust memory under various circuit-level noise models \cite{gidney2021honeycombmemory}.
 Altogether, the honeycomb code provides a foundation worth considering when building a fault-tolerant quantum computer.
 
@@ -269,11 +269,11 @@ Fortunately, as we will show, these changes do \emph{not} qualitatively affect t
 
 \begin{figure}[ht!]
     \centering
-    \resizebox{0.75\linewidth}{!}{
-        \includegraphics{assets/boundary_detectors.png}
+    \resizebox{0.85\linewidth}{!}{
+        \includegraphics{assets/boundary_detectors.pdf}
     }
     \caption{
-    A comparison of a bulk face, for which two detectors are formed every six edge measurement rounds, and a boundary face, for which one detector is formed every six edge measurement rounds.  The vertical black bars represent the edge measurements, while the horizontal colored lines represent the time during which the labeled Pauli operator stabilizes the face.  Semi-circles represent projecting onto a subspace stabilized by the labeled operator, while stars represent an anti-commuting measurement destabilizing the face from that subspace.  Circles represent detectors - collections of measurements which should yield deterministic parity in the absence of noise. Black arrows indicate which measurements are used to form these detectors.
+    The evolution of stabilizers for a bulk plaquette, for which two detectors are formed every six edge measurement rounds, and for both kinds of a boundary plaquette, for which one detector is formed every six edge measurement rounds.  The vertical black bars represent the edge measurements, while the horizontal colored lines represent the time during which a given stabilizer is valid (i.e. stabilizes the state of the qubits on the plaquette).  This illustrates that bulk plaquettes feature a stabilizer that remains consistently valid through the measurement cycle. Filled circles represent measurements that project the plaquette qubits into the subspace of the given stabilizer.  Open circles represent occasions where we learn a stabilizer by combining other measurements, as indicated by dashed arrows. Grey arrows indicate detectors, which are comparisons of consistent values of stabilizers (or equivalently, products of all the check measurements from which we learned the stabilizers in question). These detectors should yield deterministic parity in the absence of noise, and detect errors in the presence of noise.
     }
     \label{fig:detectors}
 \end{figure}
@@ -286,11 +286,11 @@ It's not hard to figure out how to move in a particular direction while cutting 
 Additionally, every qubit and operation in the planar code is a qubit or operation inherited from the unbounded honeycomb code.
 From a circuit perspective, the cutting approach is purely subtractive.
 It removes operations, or shrinks operations, but never introduces operations.
-So it's not hard to figure out how to ``cap off'' the boundaries (i.e. which operations need to occur there in order for the circuit to be correct).
+This means it's not hard to figure out how to ``cap off'' the boundaries (i.e. which operations need to occur there in order for the circuit to be correct).
 This is analogous to the boundaries of the surface code, which can be introduced in a similar way.
 
 It is worth noting that not every edge measurement we make is used to form a detector.  
-In \fig{detectors}, during the edge measurement step labeled $X_a$, consider a red edge measurement incident to a green face along the top boundary.
+In \fig{parity_check_cycle}, immediately after the edge measurement step labeled $X_a$, consider a red edge measurement incident to a green face along the top boundary. This case is also illustrated at the bottom of \fig{detectors}.
 This red edge measurement can only contribute to the blue stabilizer below it and the green stabilizer above it.
 The measurement doesn't contribute to the blue stabilizer because the step $X_a$ is sandwiched between two blue edge steps, and blue stabilizers are only measured when a red edge measurement step is next to a green edge measurement step.
 The measurement does appear in the equation used for checking the green stabilizer, but it appears \emph{twice} (once on the left and once on the right).
@@ -299,13 +299,16 @@ Therefore this specific edge measurement is never used.
 It could be removed from the circuit, freeing up spacetime that could be used for other purposes.
 That would likely be beneficial but, to keep the definition of our boundaries simple and uniform, we leave things as they are instead of removing the unused measurements.
 
-In \cite{gidney2021honeycombmemory} we used honeycomb codes covering regions of data qubits with a width:height aspect ratio of 2:3.
+In \cite{gidney2021honeycombmemory}, we used honeycomb codes covering regions of data qubits with a width:height aspect ratio of 2:3.
 We picked this ratio by carefully thinking about what the fastest-horizontally-moving and fastest-vertically-moving error mechanisms would be.
 For this paper, we used a new feature in Stim which can automatically search for the smallest undetectable set of ``graphlike'' errors that cause a logical error.
 A graphlike error is a physical error that produces at most two detection events.
-The graphlike code distance may be larger than the true code distance, but it can be computed cheaply by reduction to a shortest path problem.
+For example, a single qubit X error on a data qubit immediately after a measurement is a graphlike error, as it will trigger the detectors associated with the two non-commuting incident faces. An example of a non-graphlike error in the honeycomb code is a single measurement error, which causes 4 detection events - two for each of the faces it is incident too.  
+The graphlike code distance may be larger than the true code distance, because it neglects the possibility that errors that trigger multiple detectors may produce faster moving errors. However, it can be computed cheaply by reduction to a shortest path problem. The graphlike error distance therefore is a useful heuristic for choosing e.g. patch dimensions, but the Monte Carlo sampling is the real arbiter of code performance, as it will include the influence of all elements of the error model. Indeed, departures from error scaling matching the graphlike code distance would be a good indication that non-graphlike errors are involved in the dominating error mechanism.
 
-The graphlike code distance search immediately found error mechanisms that moved faster vertically than we thought was possible in the SD6 and SI1000 circuits - see \fig{bad_error} and \tbl{graphlike_distances}.
+The graphlike code distance search immediately found error mechanisms that moved faster vertically than we thought was possible in the SD6 and SI1000 circuits. We show an example of such an error mechanism in \fig{bad_error}, where a non-obvious pattern of `X`, `Z` and `YM` on every 2nd qubit along a vertical line connect the boundaries without producing any detection events. A `YM` error is a combination of a single qubit `Y` error and a classical measurement error during one edge measurement. In the EM3 error model, the `YM` error is a native error case. In SD6 and SI1000 circuits, the `YM` error is a hook error caused by inserting an physical error on the measurement ancilla halfway through the edge measurement. 
+Note that you can't simply replace the `YM' hook error with a `Y' data error, due to time ordering constraints.
+
 With hindsight on our side, we looked more closely at the data we collected for \cite{gidney2021honeycombmemory} and realized this is actually noticeable from the plots included in the appendix of the paper (which separately showed the logical error rates for the horizontal and vertical observables).
 Consequently, in this paper, for the SD6 and SI1000 layouts, we now use a 1:2 aspect ratio instead of a 2:3 aspect ratio.
 
@@ -313,7 +316,7 @@ The graphlike code distance search also helped us choose a more efficient lattic
 Our initial implementation of the planar honeycomb code used what we now call a sheared layout - see \fig{sheared}.
 We expected this layout to perform better because it made all the boundaries identical, up to rotations of the hexagonal tiling and permutations of the colors.
 The graphlike code distance search revealed that this expectation was wrong.
-The sheared layouts have lower graphlike code distance - see \tbl{graphlike_distances}.
+\tbl{graphlike_distances} includes the horizontal and vertical graphlike code distances for the three error models and both straight and sheared boundaries, demonstrating the lower horizontal graphlike code distance of the sheared patch.
 The issue is that, because of the rotational symmetry in a hexagonal tiling, there are fast moving diagonal error mechanisms analogous to the fast moving vertical error mechanisms that forced us to change the patch aspect ratio.
 Shearing the layout preserves the horizontal distance between the two vertical boundaries, but it reduces the diagonal distance.
 Based on this information, we switched to using vertical boundaries that moved straight up-and-down - see \fig{cut_out_patch} - squiggling back and forth in a graphlike-code-distance-maximizing way.
@@ -324,15 +327,14 @@ Based on this information, we switched to using vertical boundaries that moved s
         \includegraphics{assets/bad_error.png}
     }
     \caption{
-    A sparse long distance error mechanism in the honeycomb code.
-    In the EM3 error model, the `YM` error is a native error case.
-    In SD6 and SI1000 circuits, the `YM` error is a hook error caused by inserting an error on the measurement ancilla halfway through the edge measurement.
-    Note that you can't simply replace the `YM' hook error with a `Y' data error, due to time ordering constraints.
-    In the diagram, each white circle represents a detector from the circuit.
-    The number in the circle is the edge measurement layer where that detector is checked, potentially producing a detection event.
+    A sparse long distance error mechanism along a vertical line of qubits in the honeycomb code, which was found by a search for short undetectable sets of graphlike errors.
     Each white box represents a single physical error, with the kind of error indicated by the text inside the box.
+    The `YM` error corresponds to both a Y error on one qubit and a classical flip of the reported measurement outcome for the indicated edge measurement.
+    Each white circle represents a detector from the circuit.
+    The number in the circle is the edge measurement layer where that detector is checked, potentially producing a detection event.
     An arrow from a white box to a white circle indicates that the error triggers the detector to produce a detection event.
-    Triggering a detector twice cancels out the detection event.  Below, we plot the error string traversing the lattice through both time and space.
+    Triggering a detector twice cancels out the detection event.  
+    Below, we plot the error string traversing the lattice through time as well as space, illustrating the importance of the `YM` measurement in resolving the time ordering.
     }
     \label{fig:bad_error}
 \end{figure}
@@ -413,7 +415,7 @@ Similar to \cite{gidney2021honeycombmemory}, in the EM3 model using two-qubit en
     The plotted logical error rate is the combined code cell logical error rate (see \eq{combined_logical_error}).
     Color highlights indicate statistical uncertainty from Monte Carlo sampling.
     The highlight covers hypothetical logical error rates with a Bayes factor of at most 1000 vs the maximum likelihood hypothesis probability, assuming a binomial distribution.
-    In both the planar and periodic cases, we see the noticeable effect of damaging correlated errors produced by the EM3 noise model, coinciding with \cite{gidney2021honeycombmemory}.
+    In both the planar and periodic cases, we see the noticeable effect of damaging correlated errors produced by the EM3 noise model, which result in non-linear behaviour at low error rates, coinciding with \cite{gidney2021honeycombmemory}.
     The raw planar honeycomb logical error rate data we collected for this paper is in ancillary file ``stats\_planar\_honeycomb.csv".
     The periodic honeycomb logical error rate data we are comparing against is in ancillary file ``stats\_from\_previous\_paper.csv" (copied over from \cite{gidney2021honeycombmemory}).
     }
@@ -492,10 +494,10 @@ We hope that the smallest conceivable distance-3 instantiation of the code, usin
 
 \section{Contributions}
 
-Craig Gidney and Michael Newman worked together extensively to understand the planar honeycomb code and to present it in a clear way.
+All authors worked together extensively to understand the planar honeycomb code and to present it in a clear way.
 Craig Gidney wrote the circuit generation, simulation, and plotting code.
 Michael Newman did the majority of the paper writing.
-Matt McEwen contributed refactored variants of the EM3 error model, with associated simulations and plots in the appendix.
+Matt McEwen contributed refactored variants of the EM3 error model inspired by hardware, and revised the paper for publication.
 
 \section{Acknowledgements}
 
@@ -625,7 +627,7 @@ Actually, the code applies errors \emph{before} the measurement.
 \begin{figure}[h]
     \centering
     \resizebox{\linewidth}{!}{
-        \includegraphics{assets/circuit_cycles.png}
+        \includegraphics{assets/circuit_cycles.pdf}
     }
     \caption{
     Circuit cycles used for each of the three noisy gate sets considered in this paper.
